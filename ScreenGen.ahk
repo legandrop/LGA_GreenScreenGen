@@ -111,17 +111,37 @@ GenerateImages:
         FileCreateDir, %outputDir%
     }
 
+    ; Definir los nombres de las carpetas para Margin1 y Margin2
+    outputDirMargin1 := exportsDir . "\" . folderName . "-Margin1"
+    outputDirMargin2 := exportsDir . "\" . folderName . "-Margin2"
+
+    ; Crear las carpetas si no existen
+    if !FileExist(outputDirMargin1)
+    {
+        FileCreateDir, %outputDirMargin1%
+    }
+    if !FileExist(outputDirMargin2)
+    {
+        FileCreateDir, %outputDirMargin2%
+    }
+
     ; **Archivo de prueba de caracteres especiales**
     commandsLog := logsDir . "\ffmpeg_commands.txt" ; Cambiado para usar la carpeta de logs
 
     ; Definir los tipos de imágenes a generar
-    imageNames := ["Verde_100", "Verde_50", "Verde_25", "Verde_100_Track_4", "Verde_50_Track_4", "Verde_25_Track_4", "Verde_100_Track_5", "Verde_50_Track_5", "Verde_25_Track_5", "Verde_100_Track_9", "Verde_50_Track_9", "Verde_25_Track_9", "Gris", "Gris_Track_4", "Gris_Track_5", "Gris_Track_9"]
-    imageColors := ["#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#808080", "#808080", "#808080", "#808080"]
-    imageTracking := [false, false, false, true, true, true, true, true, true, true, true, true, false, true, true, true]
-    trackColors := ["#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#003C00", "#003C00", "#003C00", "#003C00"]
+    imageNames := ["Verde_100", "Verde_50", "Verde_25", "Verde_100_Track_4", "Verde_50_Track_4", "Verde_25_Track_4", "Verde_100_Track_5", "Verde_50_Track_5", "Verde_25_Track_5", "Verde_100_Track_9", "Verde_50_Track_9", "Verde_25_Track_9", "Azul_100", "Azul_50", "Azul_25", "Azul_100_Track_4", "Azul_50_Track_4", "Azul_25_Track_4", "Azul_100_Track_5", "Azul_50_Track_5", "Azul_25_Track_5", "Azul_100_Track_9", "Azul_50_Track_9", "Azul_25_Track_9", "Gris", "Gris_Track_4", "Gris_Track_5", "Gris_Track_9"]
 
-    ; Definir el color azul para los puntos de track alternativos
+    imageColors := ["#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#808080", "#808080", "#808080", "#808080"]
+
+    imageTracking := [false, false, false, true, true, true, true, true, true, true, true, true, false, false, false, true, true, true, true, true, true, true, true, true, false, true, true, true]
+
+    trackColors := ["#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#000080", "#00003C", "#000080", "#000080", "#00003C", "#000080", "#000080", "#00003C", "#000080", "#000080", "#00003C", "#000080", "#003C00", "#003C00", "#003C00", "#003C00"]
+
+    ; Definir el color azul para los puntos de track alternativos (para imágenes verdes y grises)
     blueTrackColor := "#000080"
+
+    ; Definir el color verde para los puntos de track alternativos
+    greenTrackColor := "#008000"
 
     ; Definir variables para el tamaño y posición de los puntos
     fontSizeBase := Round(Min(1920, 1080) * 0.08)  ; 8% del lado más pequeño de HD
@@ -140,25 +160,40 @@ GenerateImages:
         hasTracking := imageTracking[idx]
         trackColor := trackColors[idx]  ; Usar el color de track correspondiente
 
-        ; Si la imagen tiene tracking, generar versiones con puntos verdes y azules
+        ; Si la imagen tiene tracking, generar versiones con puntos de colores
         if (hasTracking)
         {
             ; Calcular el margen fijo basado en el Size 2
             fixedMargin := Round(fontSize * 0.5)
 
             ; Array para almacenar los colores de track
-            trackColorArray := [trackColor, blueTrackColor]
+            if (InStr(imageName, "Verde") || InStr(imageName, "Gris"))
+            {
+                trackColorArray := [trackColor, blueTrackColor]
+                colorSuffixArray := ["-G", "-B"]
+            }
+            else if (InStr(imageName, "Azul"))
+            {
+                if (InStr(imageName, "Azul_100"))
+                    trackColorArray := ["#000080", greenTrackColor]  ; Azul 50% y Verde 50%
+                else if (InStr(imageName, "Azul_50"))
+                    trackColorArray := ["#00003C", greenTrackColor]  ; Azul 25% y Verde 50%
+                else if (InStr(imageName, "Azul_25"))
+                    trackColorArray := ["#000080", greenTrackColor]  ; Azul 50% y Verde 50%
+                colorSuffixArray := ["-B", "-G"]
+            }
 
-            ; Loop para generar versiones con puntos verdes y azules
+            ; Loop para generar versiones con puntos de diferentes colores
             Loop, 2
             {
                 currentTrackColor := trackColorArray[A_Index]
-                colorSuffix := A_Index == 2 ? "-B" : "-G"
+                colorSuffix := colorSuffixArray[A_Index]
 
                 Loop, 2
                 {
                     marginIdx := A_Index
-                    currentMargin := fixedMargin * (marginIdx == 1 ? 1 : 3)  
+                    currentMargin := fixedMargin * (marginIdx == 1 ? 1 : 3)
+                    currentOutputDir := marginIdx == 1 ? outputDirMargin1 : outputDirMargin2
 
                     Loop, 3
                     {
@@ -169,7 +204,7 @@ GenerateImages:
                         trackCount := RegExReplace(imageName, ".*Track_(\d+).*", "$1")
 
                         ; Definir el nombre del archivo de salida con el nuevo orden
-                        outputFile := outputDir . "\" . RegExReplace(imageName, "_Track_\d+", "_Track") . "-Margin" . marginIdx . "-" . trackCount . "-Size" . sizeIdx . colorSuffix . ".jpg"
+                        outputFile := currentOutputDir . "\" . RegExReplace(imageName, "_Track_\d+", "_Track") . "-" . trackCount . "-Size" . sizeIdx . colorSuffix . ".jpg"
 
                         ; Definir ruta para los archivos de log con el nuevo orden de nombres
                         errorLog := logsDir . "\" . RegExReplace(imageName, "_Track_\d+", "_Track") . "-Margin" . marginIdx . "-" . trackCount . "-Size" . sizeIdx . colorSuffix . "_error.log"
@@ -291,97 +326,102 @@ GenerateImages:
         }
         else
         {
-            ; Para imágenes sin tracking, generar una sola vez sin cambios
-            outputFile := outputDir . "\" . imageName . ".jpg"
-            
-            ; Comprobar si el archivo ya existe
-            if FileExist(outputFile)
+            ; Para imágenes sin tracking, generar una vez en cada carpeta
+            Loop, 2
             {
-                ; Preguntar una sola vez si deseas sobrescribir todos los archivos
-                if (!overwriteConfirmed)
+                marginIdx := A_Index
+                currentOutputDir := marginIdx == 1 ? outputDirMargin1 : outputDirMargin2
+                outputFile := currentOutputDir . "\" . imageName . ".jpg"
+                
+                ; Comprobar si el archivo ya existe
+                if FileExist(outputFile)
                 {
-                    MsgBox, 36, Confirmación, Algunos archivos ya existen. ¿Deseas sobrescribir todos los archivos existentes?
-                    IfMsgBox, No
-                        return
-                    overwriteConfirmed := true
-                }
-            }
-
-            ; Definir ruta para los archivos de log
-            errorLog := logsDir . "\" . imageName . "_error.log"
-            outputLog := logsDir . "\" . imageName . "_output.log"
-
-            ; Construir el comando FFmpeg sin el filtro
-            ffmpegCommand := """" . ffmpegPath . """ -y -f lavfi -i color=c=" . imageColor . ":s=" . width . "x" . height . " -update 1 -frames:v 1 -f image2 """ . outputFile . """ >""" . outputLog . """ 2>""" . errorLog . """"
-
-            ; **Añadir el comando FFmpeg al archivo de registro**
-            FileAppend, %ffmpegCommand%`n, %commandsLog%
-
-            ; **Añadir el comando a un archivo de depuración**
-            FileAppend, %ffmpegCommand%`n, %logsDir%\ffmpeg_debug.txt
-
-            ; Crear un archivo de lote temporal para ejecutar el comando
-            tempBatch := A_Temp "\run_ffmpeg_" . idx . ".bat"
-            FileDelete, %tempBatch%  ; Asegura que el archivo no exista
-
-            ; **Añadir 'chcp 65001' al inicio del archivo de lote para establecer la página de código a UTF-8**
-            FileAppend, % "chcp 65001`n" . ffmpegCommand . "`nexit", %tempBatch%, UTF-8-RAW  ; Añade 'exit' para cerrar cmd después de ejecutar
-
-            ; Ejecutar el archivo de lote de manera oculta y esperar a que termine
-            RunWait, %tempBatch%, , Hide
-
-            ; Verificar si el archivo se creó correctamente
-            if FileExist(outputFile)
-            {
-                ; Eliminar archivos de log si no hubo errores
-                if FileExist(errorLog)
-                {
-                    FileDelete, %errorLog%
-                }
-                if FileExist(outputLog)
-                {
-                    FileDelete, %outputLog%
-                }
-            }
-            else
-            {
-                ; Leer el contenido del archivo de error
-                if FileExist(errorLog)
-                {
-                    FileRead, ffmpegError, %errorLog%
-                    if (ffmpegError = "")
+                    ; Preguntar una sola vez si deseas sobrescribir todos los archivos
+                    if (!overwriteConfirmed)
                     {
-                        MsgBox, 16, Error, Hubo un problema al generar %imageName%.jpg, pero no se encontraron detalles de error.
+                        MsgBox, 36, Confirmación, Algunos archivos ya existen. ¿Deseas sobrescribir todos los archivos existentes?
+                        IfMsgBox, No
+                            return
+                        overwriteConfirmed := true
                     }
-                    else
+                }
+
+                ; Definir ruta para los archivos de log
+                errorLog := logsDir . "\" . imageName . "_error.log"
+                outputLog := logsDir . "\" . imageName . "_output.log"
+
+                ; Construir el comando FFmpeg sin el filtro
+                ffmpegCommand := """" . ffmpegPath . """ -y -f lavfi -i color=c=" . imageColor . ":s=" . width . "x" . height . " -update 1 -frames:v 1 -f image2 """ . outputFile . """ >""" . outputLog . """ 2>""" . errorLog . """"
+
+                ; **Añadir el comando FFmpeg al archivo de registro**
+                FileAppend, %ffmpegCommand%`n, %commandsLog%
+
+                ; **Añadir el comando a un archivo de depuración**
+                FileAppend, %ffmpegCommand%`n, %logsDir%\ffmpeg_debug.txt
+
+                ; Crear un archivo de lote temporal para ejecutar el comando
+                tempBatch := A_Temp "\run_ffmpeg_" . idx . ".bat"
+                FileDelete, %tempBatch%  ; Asegura que el archivo no exista
+
+                ; **Añadir 'chcp 65001' al inicio del archivo de lote para establecer la página de código a UTF-8**
+                FileAppend, % "chcp 65001`n" . ffmpegCommand . "`nexit", %tempBatch%, UTF-8-RAW  ; Añade 'exit' para cerrar cmd después de ejecutar
+
+                ; Ejecutar el archivo de lote de manera oculta y esperar a que termine
+                RunWait, %tempBatch%, , Hide
+
+                ; Verificar si el archivo se creó correctamente
+                if FileExist(outputFile)
+                {
+                    ; Eliminar archivos de log si no hubo errores
+                    if FileExist(errorLog)
                     {
-                        MsgBox, 16, Error, Hubo un problema al generar %imageName%.jpg.`n`nDetalles del Error:`n%ffmpegError%
+                        FileDelete, %errorLog%
+                    }
+                    if FileExist(outputLog)
+                    {
+                        FileDelete, %outputLog%
                     }
                 }
                 else
                 {
-                    MsgBox, 16, Error, Hubo un problema al generar %imageName%.jpg, y no se pudo encontrar el archivo de registro de errores.
-                }
-
-                ; Mostrar la salida estándar de FFmpeg si existió
-                if FileExist(outputLog)
-                {
-                    FileRead, ffmpegOutput, %outputLog%
-                    if (ffmpegOutput != "")
+                    ; Leer el contenido del archivo de error
+                    if FileExist(errorLog)
                     {
-                        MsgBox, 48, Salida de FFmpeg, Detalles de la salida:`n%ffmpegOutput%
+                        FileRead, ffmpegError, %errorLog%
+                        if (ffmpegError = "")
+                        {
+                            MsgBox, 16, Error, Hubo un problema al generar %imageName%.jpg, pero no se encontraron detalles de error.
+                        }
+                        else
+                        {
+                            MsgBox, 16, Error, Hubo un problema al generar %imageName%.jpg.`n`nDetalles del Error:`n%ffmpegError%
+                        }
                     }
-                    FileDelete, %outputLog%
-                }
-            }
+                    else
+                    {
+                        MsgBox, 16, Error, Hubo un problema al generar %imageName%.jpg, y no se pudo encontrar el archivo de registro de errores.
+                    }
 
-            ; Eliminar el archivo de lote temporal
-            FileDelete, %tempBatch%
+                    ; Mostrar la salida estándar de FFmpeg si existió
+                    if FileExist(outputLog)
+                    {
+                        FileRead, ffmpegOutput, %outputLog%
+                        if (ffmpegOutput != "")
+                        {
+                            MsgBox, 48, Salida de FFmpeg, Detalles de la salida:`n%ffmpegOutput%
+                        }
+                        FileDelete, %outputLog%
+                    }
+                }
+
+                ; Eliminar el archivo de lote temporal
+                FileDelete, %tempBatch%
+            }
         }
     }
 
-    ; Notificar al usuario que todas las imágenes se han generado
-    MsgBox, 64, Éxito, Todas las imágenes han sido generadas correctamente en la carpeta %folderName%.
+    ; Modificar el mensaje final para reflejar las dos carpetas
+    MsgBox, 64, Éxito, Todas las imágenes han sido generadas correctamente en las carpetas:`n%folderName%-Margin1`n%folderName%-Margin2
 return
 
 ; Cerrar la ventana al presionar Esc o cerrar la ventana
