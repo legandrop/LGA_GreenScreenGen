@@ -33,36 +33,135 @@ Loop, Read, %iniFilePath%
         resolutionsList .= resolutionDisplay . "|"  ; Añadir al ComboBox
     }
 }
+; Eliminar el último carácter |
+resolutionsList := RTrim(resolutionsList, "|")
 
 ; Crear la interfaz gráfica principal
 Gui, Main:New, +LabelMainGui
-Gui, Main:Add, Text, x20 y20 w200 h20, Selecciona la resolución:
-Gui, Main:Add, ComboBox, vSelectedResolution x20 y50 w200 h150, %resolutionsList%
-Gui, Main:Add, Button, gGenerateImages x240 y50 w80 h30, OK
+Gui, Main:Add, Text, x20 y20 w200 h20, Select resolution:
+Gui, Main:Add, ComboBox, vSelectedResolution x20 y50 w210 h21 r10, %resolutionsList%
+Gui, Main:Add, Button, gAddResolution x18 y90 w95 h24, Add Resolution
+Gui, Main:Add, Button, gRemoveResolution x122 y90 w110 h24, Remove Resolution
+Gui, Main:Add, Button, gGenerateImages x240 y47 w80 h26, Generate
 
 ; Crear la interfaz gráfica de progreso (inicialmente oculta)
 Gui, Progress:New, +LabelProgressGui
-Gui, Progress:Add, Text, vProgressText x20 y20 w300 h20, Iniciando generación de imágenes...
+Gui, Progress:Add, Text, vProgressText x20 y20 w300 h20, Starting image generation...
 Gui, Progress:Add, Progress, vProgressBar x20 y50 w300 h20 Range0-100, 0
+Gui, Progress:Add, Button, gCancelGeneration x130 y80 w80 h30, Cancel
 
 ; Mostrar la interfaz principal
-Gui, Main:Show, w340 h100, GreenScreenGen
+Gui, Main:Show, w340 h140, GreenScreenGen
 return
 
-; Función que se ejecuta al hacer clic en el botón OK
+AddResolution:
+    Gui, NewRes:New, +LabelNewResGui
+    Gui, NewRes:Add, Text, x20 y20 w100 h20, Name:
+    Gui, NewRes:Add, Edit, vNewResName x130 y20 w180 h20
+    Gui, NewRes:Add, Text, x20 y50 w100 h20, Width (X):
+    Gui, NewRes:Add, Edit, vNewResWidth x130 y50 w180 h20 Number
+    Gui, NewRes:Add, Text, x20 y80 w100 h20, Height (Y):
+    Gui, NewRes:Add, Edit, vNewResHeight x130 y80 w180 h20 Number
+    Gui, NewRes:Add, Button, gSaveNewResolution x130 y110 w80 h30, Save
+    Gui, NewRes:Add, Button, gCancelNewResolution x220 y110 w80 h30, Cancel
+    Gui, NewRes:Show, w330 h150, Add New Resolution
+return
+
+RemoveResolution:
+    Gui, Main:Submit, NoHide
+    if (SelectedResolution != "")
+    {
+        MsgBox, 4, Confirm Deletion, Are you sure you want to delete the resolution "%SelectedResolution%"?
+        IfMsgBox, Yes
+        {
+            FileRead, content, %iniFilePath%
+            ; Separar el nombre y la resolución
+            StringSplit, parts, SelectedResolution, -
+            resolutionName := Trim(parts1)
+            
+            ; Crear una expresión regular para buscar la línea completa
+            needle := "m)^" . resolutionName . "=.*\R?"
+            
+            ; Reemplazar la línea encontrada con una cadena vacía
+            newContent := RegExReplace(content, needle, "")
+            
+            ; Eliminar líneas en blanco adicionales que puedan quedar
+            newContent := RegExReplace(newContent, "m)^\s*$\R?", "")
+            
+            ; Escribir el nuevo contenido al archivo
+            FileDelete, %iniFilePath%
+            FileAppend, %newContent%, %iniFilePath%
+            
+            ; Recargar el script para actualizar la lista de resoluciones
+            Reload
+        }
+    }
+    else
+    {
+        MsgBox, 48, Error, Please select a resolution to delete.
+    }
+return
+
+HandleSelection:
+    Gui, Main:Submit, NoHide
+    if (SelectedResolution = "Add a new resolution")
+    {
+        Gui, NewRes:New, +LabelNewResGui
+        Gui, NewRes:Add, Text, x20 y20 w100 h20, Name:
+        Gui, NewRes:Add, Edit, vNewResName x130 y20 w180 h20
+        Gui, NewRes:Add, Text, x20 y50 w100 h20, Width (X):
+        Gui, NewRes:Add, Edit, vNewResWidth x130 y50 w180 h20 Number
+        Gui, NewRes:Add, Text, x20 y80 w100 h20, Height (Y):
+        Gui, NewRes:Add, Edit, vNewResHeight x130 y80 w180 h20 Number
+        Gui, NewRes:Add, Button, gSaveNewResolution x130 y110 w80 h30, Save
+        Gui, NewRes:Add, Button, gCancelNewResolution x220 y110 w80 h30, Cancel
+        Gui, NewRes:Show, w330 h150, Add New Resolution
+    }
+    else
+    {
+        Gosub, GenerateImages
+    }
+return
+
+SaveNewResolution:
+    Gui, NewRes:Submit
+    if (NewResName != "" && NewResWidth > 0 && NewResHeight > 0)
+    {
+        newEntry := NewResName . "=" . NewResWidth . "x" . NewResHeight
+        FileAppend, %newEntry%`n, %iniFilePath%
+        Gui, NewRes:Destroy
+        Reload
+    }
+    else
+    {
+        MsgBox, 48, Error, Please fill in all fields correctly.
+    }
+return
+
+CancelNewResolution:
+    Gui, NewRes:Destroy
+return
+
+; Variable global para controlar la cancelación
+global isCancelled := false
+
+; Función que se ejecuta al hacer clic en el botón Generate
 GenerateImages:
     Gui, Main:Submit, NoHide
     resolutionDisplay := SelectedResolution
 
     if (resolutionDisplay = "")
     {
-        MsgBox, 48, Error, Por favor, selecciona una resolución.
+        MsgBox, 48, Error, Please select a resolution.
         return
     }
 
     ; Ocultar la interfaz principal y mostrar la de progreso
     Gui, Main:Hide
-    Gui, Progress:Show, w340 h100, GreenScreenGen - Generando Imágenes
+    Gui, Progress:Show, w340 h120, GreenScreenGen - Generating Images
+
+    ; Reiniciar la variable de cancelación
+    isCancelled := false
 
     ; Inicializar la confirmación de sobrescritura
     overwriteConfirmed := false
@@ -102,7 +201,7 @@ GenerateImages:
     ; Verificar si FFmpeg existe
     if !FileExist(ffmpegPath)
     {
-        MsgBox, 16, Error, No se encontró ffmpeg.exe en la carpeta FFmpeg.
+        MsgBox, 16, Error, ffmpeg.exe was not found in the FFmpeg folder.
         return
     }
 
@@ -113,13 +212,6 @@ GenerateImages:
 
     ; Definir el nombre de la carpeta con el nombre y la resolución
     folderName := resolutionName . "_" . resolution
-    outputDir := exportsDir . "\" . folderName ; Cambiado para usar la carpeta Exports
-
-    ; Crear la carpeta si no existe
-    if !FileExist(outputDir)
-    {
-        FileCreateDir, %outputDir%
-    }
 
     ; Definir los nombres de las carpetas para Margin1 y Margin2
     outputDirMargin1 := exportsDir . "\" . folderName . "-Margin1"
@@ -139,7 +231,7 @@ GenerateImages:
     commandsLog := logsDir . "\ffmpeg_commands.txt" ; Cambiado para usar la carpeta de logs
 
     ; Definir los tipos de imágenes a generar
-    imageNames := ["Verde_100", "Verde_50", "Verde_25", "Verde_100_Track_4", "Verde_50_Track_4", "Verde_25_Track_4", "Verde_100_Track_5", "Verde_50_Track_5", "Verde_25_Track_5", "Verde_100_Track_9", "Verde_50_Track_9", "Verde_25_Track_9", "Azul_100", "Azul_50", "Azul_25", "Azul_100_Track_4", "Azul_50_Track_4", "Azul_25_Track_4", "Azul_100_Track_5", "Azul_50_Track_5", "Azul_25_Track_5", "Azul_100_Track_9", "Azul_50_Track_9", "Azul_25_Track_9", "Gris", "Gris_Track_4", "Gris_Track_5", "Gris_Track_9"]
+    imageNames := ["Green_100", "Green_50", "Green_25", "Green_100_Track_4", "Green_50_Track_4", "Green_25_Track_4", "Green_100_Track_5", "Green_50_Track_5", "Green_25_Track_5", "Green_100_Track_9", "Green_50_Track_9", "Green_25_Track_9", "Blue_100", "Blue_50", "Blue_25", "Blue_100_Track_4", "Blue_50_Track_4", "Blue_25_Track_4", "Blue_100_Track_5", "Blue_50_Track_5", "Blue_25_Track_5", "Blue_100_Track_9", "Blue_50_Track_9", "Blue_25_Track_9", "Gray", "Gray_Track_4", "Gray_Track_5", "Gray_Track_9"]
 
     imageColors := ["#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#808080", "#808080", "#808080", "#808080"]
 
@@ -168,15 +260,22 @@ GenerateImages:
     ; Loop para generar cada imagen
     Loop, % totalImages
     {
+        ; Verificar si se ha cancelado la generación
+        if (isCancelled)
+        {
+            MsgBox, 48, Cancelled, Image generation was cancelled.
+            break
+        }
+
         idx := A_Index
         imageName := imageNames[idx]
         imageColor := imageColors[idx]
         hasTracking := imageTracking[idx]
         trackColor := trackColors[idx]
 
-        ; Actualizar el texto de progreso
+        ; Actualizar el texto de progreso y la barra de progreso
         currentImage++
-        progressText := "Generando: " . imageName . " (" . currentImage . "/" . totalImages . ")"
+        progressText := "Generating: " . imageName . " (" . currentImage . "/" . totalImages . ")"
         GuiControl, Progress:, ProgressText, %progressText%
         GuiControl, Progress:, ProgressBar, % (currentImage / totalImages) * 100
 
@@ -187,18 +286,18 @@ GenerateImages:
             fixedMargin := Round(fontSize * 0.5)
 
             ; Array para almacenar los colores de track
-            if (InStr(imageName, "Verde") || InStr(imageName, "Gris"))
+            if (InStr(imageName, "Green") || InStr(imageName, "Gray"))
             {
                 trackColorArray := [trackColor, blueTrackColor]
                 colorSuffixArray := ["-G", "-B"]
             }
-            else if (InStr(imageName, "Azul"))
+            else if (InStr(imageName, "Blue"))
             {
-                if (InStr(imageName, "Azul_100"))
+                if (InStr(imageName, "Blue_100"))
                     trackColorArray := ["#000080", greenTrackColor]  ; Azul 50% y Verde 50%
-                else if (InStr(imageName, "Azul_50"))
+                else if (InStr(imageName, "Blue_50"))
                     trackColorArray := ["#00003C", greenTrackColor]  ; Azul 25% y Verde 50%
-                else if (InStr(imageName, "Azul_25"))
+                else if (InStr(imageName, "Blue_25"))
                     trackColorArray := ["#000080", greenTrackColor]  ; Azul 50% y Verde 50%
                 colorSuffixArray := ["-B", "-G"]
             }
@@ -236,7 +335,7 @@ GenerateImages:
                             ; Preguntar una sola vez si deseas sobrescribir todos los archivos
                             if (!overwriteConfirmed)
                             {
-                                MsgBox, 36, Confirmación, Algunos archivos ya existen. ¿Deseas sobrescribir todos los archivos existentes?
+                                MsgBox, 36, Confirmation, Some files already exist. Do you want to overwrite all existing files?
                                 IfMsgBox, No
                                     return
                                 overwriteConfirmed := true
@@ -314,16 +413,16 @@ GenerateImages:
                                 FileRead, ffmpegError, %errorLog%
                                 if (ffmpegError = "")
                                 {
-                                    MsgBox, 16, Error, Hubo un problema al generar %imageName%.jpg, pero no se encontraron detalles de error.
+                                    MsgBox, 16, Error, There was a problem generating %imageName%.jpg, but no error details were found.
                                 }
                                 else
                                 {
-                                    MsgBox, 16, Error, Hubo un problema al generar %imageName%.jpg.`n`nDetalles del Error:`n%ffmpegError%
+                                    MsgBox, 16, Error, There was a problem generating %imageName%.jpg.`n`nError Details:`n%ffmpegError%
                                 }
                             }
                             else
                             {
-                                MsgBox, 16, Error, Hubo un problema al generar %imageName%.jpg, y no se pudo encontrar el archivo de registro de errores.
+                                MsgBox, 16, Error, There was a problem generating %imageName%.jpg, and the error log file could not be found.
                             }
 
                             ; Mostrar la salida estándar de FFmpeg si existió
@@ -332,7 +431,7 @@ GenerateImages:
                                 FileRead, ffmpegOutput, %outputLog%
                                 if (ffmpegOutput != "")
                                 {
-                                    MsgBox, 48, Salida de FFmpeg, Detalles de la salida:`n%ffmpegOutput%
+                                    MsgBox, 48, FFmpeg Output, Output details:`n%ffmpegOutput%
                                 }
                                 FileDelete, %outputLog%
                             }
@@ -359,7 +458,7 @@ GenerateImages:
                     ; Preguntar una sola vez si deseas sobrescribir todos los archivos
                     if (!overwriteConfirmed)
                     {
-                        MsgBox, 36, Confirmación, Algunos archivos ya existen. ¿Deseas sobrescribir todos los archivos existentes?
+                        MsgBox, 36, Confirmation, Some files already exist. Do you want to overwrite all existing files?
                         IfMsgBox, No
                             return
                         overwriteConfirmed := true
@@ -410,16 +509,16 @@ GenerateImages:
                         FileRead, ffmpegError, %errorLog%
                         if (ffmpegError = "")
                         {
-                            MsgBox, 16, Error, Hubo un problema al generar %imageName%.jpg, pero no se encontraron detalles de error.
+                            MsgBox, 16, Error, There was a problem generating %imageName%.jpg, but no error details were found.
                         }
                         else
                         {
-                            MsgBox, 16, Error, Hubo un problema al generar %imageName%.jpg.`n`nDetalles del Error:`n%ffmpegError%
+                            MsgBox, 16, Error, There was a problem generating %imageName%.jpg.`n`nError Details:`n%ffmpegError%
                         }
                     }
                     else
                     {
-                        MsgBox, 16, Error, Hubo un problema al generar %imageName%.jpg, y no se pudo encontrar el archivo de registro de errores.
+                        MsgBox, 16, Error, There was a problem generating %imageName%.jpg, and the error log file could not be found.
                     }
 
                     ; Mostrar la salida estándar de FFmpeg si existió
@@ -428,7 +527,7 @@ GenerateImages:
                         FileRead, ffmpegOutput, %outputLog%
                         if (ffmpegOutput != "")
                         {
-                            MsgBox, 48, Salida de FFmpeg, Detalles de la salida:`n%ffmpegOutput%
+                            MsgBox, 48, FFmpeg Output, Output details:`n%ffmpegOutput%
                         }
                         FileDelete, %outputLog%
                     }
@@ -440,12 +539,20 @@ GenerateImages:
         }
     }
 
-    ; Mostrar mensaje de finalización
-    MsgBox, 64, Éxito, Todas las imágenes han sido generadas correctamente en las carpetas:`n%folderName%-Margin1`n%folderName%-Margin2
+    ; Mostrar mensaje de finalización solo si no se canceló
+    if (!isCancelled)
+    {
+        MsgBox, 64, Success, All images have been successfully generated in the folders:`n%folderName%-Margin1`n%folderName%-Margin2
+    }
 
     ; Ocultar la interfaz de progreso y mostrar la principal
     Gui, Progress:Hide
     Gui, Main:Show
+return
+
+; Función para manejar la cancelación
+CancelGeneration:
+    isCancelled := true
 return
 
 ; Manejadores de eventos para cerrar las ventanas
@@ -455,5 +562,12 @@ MainGuiEscape:
 
 ProgressGuiClose:
 ProgressGuiEscape:
-    ; No hacer nada, evitar que el usuario cierre la ventana de progreso
+    ; Preguntar al usuario si realmente quiere cancelar
+    MsgBox, 4, Confirm Cancellation, Are you sure you want to cancel the image generation?
+    IfMsgBox, Yes
+    {
+        isCancelled := true
+    }
 return
+
+; ... (resto del código sin cambios)
