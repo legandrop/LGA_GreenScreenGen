@@ -43,6 +43,7 @@ Gui, Main:Add, ComboBox, vSelectedResolution x20 y50 w210 h21 r10, %resolutionsL
 Gui, Main:Add, Button, gAddResolution x18 y90 w95 h24, Add Resolution
 Gui, Main:Add, Button, gRemoveResolution x122 y90 w110 h24, Remove Resolution
 Gui, Main:Add, Button, gGenerateImages x240 y47 w80 h26, Generate
+Gui, Main:Add, Button, gGenerateAll x240 y77 w80 h26, Generate All
 
 ; Crear la interfaz gráfica de progreso (inicialmente oculta)
 Gui, Progress:New, +LabelProgressGui
@@ -152,13 +153,14 @@ GenerateImages:
 
     if (resolutionDisplay = "")
     {
-        MsgBox, 48, Error, Please select a resolution.
+        if (A_ThisLabel != "GenerateAll")
+            MsgBox, 48, Error, Please select a resolution.
         return
     }
 
     ; Ocultar la interfaz principal y mostrar la de progreso
     Gui, Main:Hide
-    Gui, Progress:Show, w340 h120, GreenScreenGen - Generating Images
+    Gui, Progress:Show, w340 h120, GreenScreenGen - Generating Images for %resolutionDisplay%
 
     ; Reiniciar la variable de cancelación
     isCancelled := false
@@ -539,20 +541,74 @@ GenerateImages:
         }
     }
 
-    ; Mostrar mensaje de finalización solo si no se canceló
-    if (!isCancelled)
+    ; Modificar el final de la función para que no muestre el mensaje de éxito
+    ; si está siendo llamada desde GenerateAll
+    if (!isCancelled && A_ThisLabel != "GenerateAll")
     {
         MsgBox, 64, Success, All images have been successfully generated in the folders:`n%folderName%-Margin1`n%folderName%-Margin2
     }
 
-    ; Ocultar la interfaz de progreso y mostrar la principal
+    ; Ocultar la interfaz de progreso
     Gui, Progress:Hide
+
+    ; Mostrar la interfaz principal solo si no fue llamada desde GenerateAll
+    if (A_ThisLabel != "GenerateAll")
+        Gui, Main:Show
+return
+
+; Añadir esta nueva función para manejar la generación de todas las resoluciones
+GenerateAll:
+    MsgBox, 4, Confirm Generation, Are you sure you want to generate images for all resolutions? This may take a long time.
+    IfMsgBox, No
+        return
+
+    ; Declarar variables globales
+    global resolutionsList, SelectedResolution, isCancelled
+
+    ; Obtener todas las resoluciones de la lista
+    allResolutions := []
+    Loop, Parse, resolutionsList, |
+    {
+        if (A_LoopField != "Add a new resolution")
+            allResolutions.Push(A_LoopField)
+    }
+
+    ; Guardar la selección original
+    originalSelection := SelectedResolution
+
+    ; Generar imágenes para cada resolución
+    for index, resolution in allResolutions
+    {
+        ; Establecer la resolución actual en el dropdown
+        GuiControl, Choose, SelectedResolution, %resolution%
+        
+        ; Llamar a GenerateImages
+        Gosub, GenerateImages
+        
+        if (isCancelled)
+        {
+            MsgBox, 48, Cancelled, Image generation was cancelled. Some resolutions may not have been processed.
+            break
+        }
+    }
+
+    ; Restaurar la selección original
+    GuiControl, Choose, SelectedResolution, %originalSelection%
+
+    ; Mostrar mensaje de finalización si no se canceló
+    if (!isCancelled)
+    {
+        MsgBox, 64, Success, All images for all resolutions have been successfully generated.
+    }
+
+    ; Volver a mostrar la interfaz principal
     Gui, Main:Show
 return
 
 ; Función para manejar la cancelación
 CancelGeneration:
     isCancelled := true
+    MsgBox, 48, Cancelling, Cancelling current and remaining resolutions...
 return
 
 ; Manejadores de eventos para cerrar las ventanas
