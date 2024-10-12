@@ -34,21 +34,24 @@ Loop, Read, %iniFilePath%
     }
 }
 
-; Crear la interfaz gráfica
-Gui, Add, Text, x20 y20 w200 h20, Selecciona la resolución:
-Gui, Add, ComboBox, vSelectedResolution x20 y50 w200 h150, %resolutionsList%
-Gui, Add, Button, gGenerateImages x240 y50 w80 h30, OK
+; Crear la interfaz gráfica principal
+Gui, Main:New, +LabelMainGui
+Gui, Main:Add, Text, x20 y20 w200 h20, Selecciona la resolución:
+Gui, Main:Add, ComboBox, vSelectedResolution x20 y50 w200 h150, %resolutionsList%
+Gui, Main:Add, Button, gGenerateImages x240 y50 w80 h30, OK
 
-Gui, Show, w340 h100, Generador de Imágenes
+; Crear la interfaz gráfica de progreso (inicialmente oculta)
+Gui, Progress:New, +LabelProgressGui
+Gui, Progress:Add, Text, vProgressText x20 y20 w300 h20, Iniciando generación de imágenes...
+Gui, Progress:Add, Progress, vProgressBar x20 y50 w300 h20 Range0-100, 0
+
+; Mostrar la interfaz principal
+Gui, Main:Show, w340 h100, GreenScreenGen
 return
 
 ; Función que se ejecuta al hacer clic en el botón OK
 GenerateImages:
-    ; Inicializar la confirmación de sobrescritura
-    overwriteConfirmed := false
-
-    ; Obtener la resolución seleccionada
-    Gui, Submit, NoHide
+    Gui, Main:Submit, NoHide
     resolutionDisplay := SelectedResolution
 
     if (resolutionDisplay = "")
@@ -56,6 +59,13 @@ GenerateImages:
         MsgBox, 48, Error, Por favor, selecciona una resolución.
         return
     }
+
+    ; Ocultar la interfaz principal y mostrar la de progreso
+    Gui, Main:Hide
+    Gui, Progress:Show, w340 h100, GreenScreenGen - Generando Imágenes
+
+    ; Inicializar la confirmación de sobrescritura
+    overwriteConfirmed := false
 
     ; Separar el nombre y la resolución
     StringSplit, resolutionParts, resolutionDisplay, -  ; Dividir por " - "
@@ -151,14 +161,24 @@ GenerateImages:
     ; Definir el carácter de círculo directamente
     circleChar := "●"  ; Unicode U+25CF
 
+    ; Calcular el número total de imágenes a generar
+    totalImages := imageNames.Length()
+    currentImage := 0
+
     ; Loop para generar cada imagen
-    Loop, % imageNames.Length()
+    Loop, % totalImages
     {
         idx := A_Index
         imageName := imageNames[idx]
         imageColor := imageColors[idx]
         hasTracking := imageTracking[idx]
-        trackColor := trackColors[idx]  ; Usar el color de track correspondiente
+        trackColor := trackColors[idx]
+
+        ; Actualizar el texto de progreso
+        currentImage++
+        progressText := "Generando: " . imageName . " (" . currentImage . "/" . totalImages . ")"
+        GuiControl, Progress:, ProgressText, %progressText%
+        GuiControl, Progress:, ProgressBar, % (currentImage / totalImages) * 100
 
         ; Si la imagen tiene tracking, generar versiones con puntos de colores
         if (hasTracking)
@@ -420,13 +440,20 @@ GenerateImages:
         }
     }
 
-    ; Modificar el mensaje final para reflejar las dos carpetas
+    ; Mostrar mensaje de finalización
     MsgBox, 64, Éxito, Todas las imágenes han sido generadas correctamente en las carpetas:`n%folderName%-Margin1`n%folderName%-Margin2
+
+    ; Ocultar la interfaz de progreso y mostrar la principal
+    Gui, Progress:Hide
+    Gui, Main:Show
 return
 
-; Cerrar la ventana al presionar Esc o cerrar la ventana
-GuiClose:
+; Manejadores de eventos para cerrar las ventanas
+MainGuiClose:
+MainGuiEscape:
     ExitApp
 
-GuiEscape:
-    ExitApp
+ProgressGuiClose:
+ProgressGuiEscape:
+    ; No hacer nada, evitar que el usuario cierre la ventana de progreso
+return
