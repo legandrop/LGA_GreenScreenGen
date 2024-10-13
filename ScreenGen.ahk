@@ -5,6 +5,13 @@ SetWorkingDir %A_ScriptDir%  ; Establece el directorio de trabajo al directorio 
 #SingleInstance, Force  ; Evita múltiples instancias del script
 FileEncoding, UTF-8-RAW  ; Asegura que los archivos se escriban en UTF-8 sin BOM
 
+; Variables globales
+global isCancelled := false
+global showCompletionMessages := true
+
+; Definir la variable del tooltip
+versionTooltip := "Lega | 2024 | www.wanka.tv"
+
 ; Función para escapar caracteres en la línea de comandos
 EscapeForCmd(str) {
     str := StrReplace(str, "&", "^&")
@@ -38,12 +45,18 @@ resolutionsList := RTrim(resolutionsList, "|")
 
 ; Crear la interfaz gráfica principal
 Gui, Main:New, +LabelMainGui
-Gui, Main:Add, Text, x20 y20 w200 h20, Select resolution:
+Gui, Main:Add, Text, x20 y30 w200 h20, Select resolution:
 Gui, Main:Add, ComboBox, vSelectedResolution x20 y50 w210 h21 r10, %resolutionsList%
-Gui, Main:Add, Button, gAddResolution x18 y90 w95 h24, Add Resolution
-Gui, Main:Add, Button, gRemoveResolution x122 y90 w110 h24, Remove Resolution
+Gui, Main:Add, Button, gAddResolution x18 y80 w95 h24, Add Resolution
+Gui, Main:Add, Button, gRemoveResolution x122 y80 w110 h24, Remove Resolution
 Gui, Main:Add, Button, gGenerateImages x240 y47 w80 h26, Generate
-Gui, Main:Add, Button, gGenerateAll x240 y77 w80 h26, Generate All
+Gui, Main:Add, Button, gGenerateAll x240 y80 w80 h24, Generate All
+; Agregar el texto de la versión sin el gLabel
+Gui, Main:Add, Text, x310 y130 w40 h20 vVersionText gShowVersionTooltip, v1.0
+
+; Obtener el handle del control VersionText
+Gui, Main: +LastFound
+GuiControlGet, hVersionText, Hwnd, VersionText
 
 ; Crear la interfaz gráfica de progreso (inicialmente oculta)
 Gui, Progress:New, +LabelProgressGui
@@ -52,7 +65,40 @@ Gui, Progress:Add, Progress, vProgressBar x20 y50 w300 h20 Range0-100, 0
 Gui, Progress:Add, Button, gCancelGeneration x130 y80 w80 h30, Cancel
 
 ; Mostrar la interfaz principal
-Gui, Main:Show, w340 h140, GreenScreenGen
+Gui, Main:Show, w340 h150, GreenScreenGen
+
+; Agregar estas líneas después de crear la GUI principal
+OnMessage(0x200, "WM_MOUSEMOVE")
+OnMessage(0x2A3, "WM_MOUSELEAVE")
+
+; Función para manejar el evento de mover el mouse
+WM_MOUSEMOVE(wParam, lParam, msg, hwnd) {
+    static hoveredControl := 0
+    if (A_GuiControl = "VersionText") {
+        if (hoveredControl != hwnd) {
+            hoveredControl := hwnd
+            SetTimer, ShowVersionTooltip, -1
+        }
+    } else if (hoveredControl) {
+        SetTimer, RemoveToolTip, -1
+        hoveredControl := 0
+    }
+}
+
+; Función para manejar el evento de salir del control con el mouse
+WM_MOUSELEAVE(wParam, lParam, msg, hwnd) {
+    SetTimer, RemoveToolTip, -1
+}
+
+; Función para ocultar el tooltip
+HideVersionTooltip:
+    ToolTip
+return
+
+; Función para mostrar el tooltip de la versión
+ShowVersionTooltip:
+    ToolTip, %versionTooltip%
+    SetTimer, RemoveToolTip, -3000
 return
 
 AddResolution:
@@ -143,10 +189,6 @@ CancelNewResolution:
     Gui, NewRes:Destroy
 return
 
-; Variable global para controlar la cancelación
-global isCancelled := false
-
-; Función que se ejecuta al hacer clic en el botón Generate
 GenerateImages:
     Gui, Main:Submit, NoHide
     resolutionDisplay := SelectedResolution
@@ -543,7 +585,7 @@ GenerateImages:
 
     ; Modificar el final de la función para que no muestre el mensaje de éxito
     ; si está siendo llamada desde GenerateAll
-    if (!isCancelled && A_ThisLabel != "GenerateAll")
+    if (!isCancelled && showCompletionMessages)
     {
         MsgBox, 64, Success, All images have been successfully generated in the folders:`n%folderName%-Margin1`n%folderName%-Margin2
     }
@@ -556,11 +598,15 @@ GenerateImages:
         Gui, Main:Show
 return
 
-; Añadir esta nueva función para manejar la generación de todas las resoluciones
 GenerateAll:
     MsgBox, 4, Confirm Generation, Are you sure you want to generate images for all resolutions? This may take a long time.
     IfMsgBox, No
         return
+
+    ; Guardar el valor original de showCompletionMessages
+    originalShowCompletionMessages := showCompletionMessages
+    ; Desactivar los mensajes de finalización para cada resolución
+    showCompletionMessages := false
 
     ; Declarar variables globales
     global resolutionsList, SelectedResolution, isCancelled
@@ -595,6 +641,9 @@ GenerateAll:
     ; Restaurar la selección original
     GuiControl, Choose, SelectedResolution, %originalSelection%
 
+    ; Restaurar el valor original de showCompletionMessages
+    showCompletionMessages := originalShowCompletionMessages
+
     ; Mostrar mensaje de finalización si no se canceló
     if (!isCancelled)
     {
@@ -605,7 +654,6 @@ GenerateAll:
     Gui, Main:Show
 return
 
-; Función para manejar la cancelación
 CancelGeneration:
     isCancelled := true
     MsgBox, 48, Cancelling, Cancelling current and remaining resolutions...
@@ -626,4 +674,7 @@ ProgressGuiEscape:
     }
 return
 
-; ... (resto del código sin cambios)
+; Función para remover el tooltip
+RemoveToolTip:
+    ToolTip
+return
