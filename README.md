@@ -8,7 +8,7 @@ GreenScreenGen es una herramienta para generar imágenes de fondo verde, azul, g
 - Crea puntos de tracking en las imágenes para facilitar el seguimiento en post-producción.
 - Permite personalizar las resoluciones de salida.
 - Genera imágenes con dos tamaños de margen diferentes (Margin1 y Margin2).
-- Produce JPGs de alta calidad.
+- Produce imágenes JPG de alta calidad.
 - Interfaz gráfica fácil de usar.
 
 ## Tecnología
@@ -26,9 +26,9 @@ Asegúrate de seleccionar la opción correcta en Base File (bin/exe) al compilar
 
 ## Uso
 
-1. Selecciona una resolución de la lista desplegable.
-2. Haz clic en "Generate" para crear imágenes para la resolución seleccionada.
-3. Utiliza "Generate All" para crear imágenes en todas las resoluciones disponibles.
+1. Seleccionar una resolución de la lista desplegable.
+2. Clickear en "Generate" para crear imágenes para la resolución seleccionada.
+3. Utilizar "Generate All" para crear imágenes en todas las resoluciones disponibles.
 
 Las imágenes generadas se guardarán en carpetas dentro del directorio "Exports":
 - La carpeta "Margin1" contiene imágenes con un margen más pequeño.

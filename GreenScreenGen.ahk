@@ -52,7 +52,7 @@ Gui, Main:Add, Button, gRemoveResolution x122 y80 w110 h24, Remove Resolution
 Gui, Main:Add, Button, gGenerateImages x240 y47 w80 h26, Generate
 Gui, Main:Add, Button, gGenerateAll x240 y80 w80 h24, Generate All
 ; Agregar el texto de la versión sin el gLabel
-Gui, Main:Add, Text, x310 y130 w40 h20 vVersionText gShowVersionTooltip, v1.1
+Gui, Main:Add, Text, x310 y130 w40 h20 vVersionText gShowVersionTooltip, v1.2
 
 ; Obtener el handle del control VersionText
 Gui, Main: +LastFound
@@ -330,20 +330,33 @@ GenerateImages:
             fixedMargin := Round(fontSize * 0.5)
 
             ; Array para almacenar los colores de track
-            if (InStr(imageName, "Green") || InStr(imageName, "Gray"))
+            if (InStr(imageName, "Green"))
             {
-                trackColorArray := [trackColor, blueTrackColor]
+                if (InStr(imageName, "Green_100"))
+                    trackColorArray := ["#008000", "#0000FF"]  ; Verde 50% y Azul 100%
+                else
+                    trackColorArray := [trackColor, blueTrackColor]
                 colorSuffixArray := ["-G", "-B"]
             }
             else if (InStr(imageName, "Blue"))
             {
                 if (InStr(imageName, "Blue_100"))
-                    trackColorArray := ["#000080", greenTrackColor]  ; Azul 50% y Verde 50%
+                    trackColorArray := ["#000080", "#00FF00"]  ; Azul 50% y Verde 100%
                 else if (InStr(imageName, "Blue_50"))
-                    trackColorArray := ["#00003C", greenTrackColor]  ; Azul 25% y Verde 50%
+                    trackColorArray := ["#00003C", greenTrackColor]  ; Azul 25% y Verde normal
                 else if (InStr(imageName, "Blue_25"))
-                    trackColorArray := ["#000080", greenTrackColor]  ; Azul 50% y Verde 50%
+                    trackColorArray := ["#000080", greenTrackColor]  ; Azul 50% y Verde normal
                 colorSuffixArray := ["-B", "-G"]
+            }
+            else if (InStr(imageName, "Gray"))
+            {
+                trackColorArray := [trackColor, blueTrackColor]
+                colorSuffixArray := ["-G", "-B"]
+            }
+            else if (InStr(imageName, "Black"))
+            {
+                trackColorArray := ["#008000", "#000080"]  ; Verde 100% y Azul 100%
+                colorSuffixArray := ["-G", "-B"]
             }
 
             ; Loop para generar versiones con puntos de diferentes colores
