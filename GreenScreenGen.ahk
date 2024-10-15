@@ -355,7 +355,7 @@ GenerateImages:
                 Loop, 2
                 {
                     marginIdx := A_Index
-                    currentMargin := fixedMargin * (marginIdx == 1 ? 1 : 3)
+                    currentMargin := fixedMargin * (marginIdx == 1 ? 0.5 : 3)
                     currentOutputDir := marginIdx == 1 ? outputDirMargin1 : outputDirMargin2
 
                     Loop, 3
@@ -418,7 +418,7 @@ GenerateImages:
                         }
 
                         ; Construir el comando FFmpeg con el filtro
-                        ffmpegCommand := """" . ffmpegPath . """ -y -f lavfi -i color=c=" . imageColor . ":s=" . width . "x" . height . " -vf """ . filter . """ -update 1 -frames:v 1 -f image2 """ . outputFile . """ >""" . outputLog . """ 2>""" . errorLog . """"
+                        ffmpegCommand := """" . ffmpegPath . """ -y -f lavfi -i color=c=" . imageColor . ":s=" . width . "x" . height . " -vf """ . filter . """ -update 1 -frames:v 1 -q:v 1 -f image2 """ . outputFile . """ >""" . outputLog . """ 2>""" . errorLog . """"
 
                         ; **Añadir el comando FFmpeg al archivo de registro**
                         FileAppend, %ffmpegCommand%`n, %commandsLog%
@@ -514,7 +514,7 @@ GenerateImages:
                 outputLog := logsDir . "\" . imageName . "_output.log"
 
                 ; Construir el comando FFmpeg sin el filtro
-                ffmpegCommand := """" . ffmpegPath . """ -y -f lavfi -i color=c=" . imageColor . ":s=" . width . "x" . height . " -update 1 -frames:v 1 -f image2 """ . outputFile . """ >""" . outputLog . """ 2>""" . errorLog . """"
+                ffmpegCommand := """" . ffmpegPath . """ -y -f lavfi -i color=c=" . imageColor . ":s=" . width . "x" . height . " -update 1 -frames:v 1 -q:v 1 -f image2 """ . outputFile . """ >""" . outputLog . """ 2>""" . errorLog . """"
 
                 ; **Añadir el comando FFmpeg al archivo de registro**
                 FileAppend, %ffmpegCommand%`n, %commandsLog%
