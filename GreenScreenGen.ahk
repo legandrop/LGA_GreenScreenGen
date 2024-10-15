@@ -275,13 +275,13 @@ GenerateImages:
     commandsLog := logsDir . "\ffmpeg_commands.txt" ; Cambiado para usar la carpeta de logs
 
     ; Definir los tipos de imágenes a generar
-    imageNames := ["Green_100", "Green_50", "Green_25", "Green_100_Track_4", "Green_50_Track_4", "Green_25_Track_4", "Green_100_Track_5", "Green_50_Track_5", "Green_25_Track_5", "Green_100_Track_9", "Green_50_Track_9", "Green_25_Track_9", "Blue_100", "Blue_50", "Blue_25", "Blue_100_Track_4", "Blue_50_Track_4", "Blue_25_Track_4", "Blue_100_Track_5", "Blue_50_Track_5", "Blue_25_Track_5", "Blue_100_Track_9", "Blue_50_Track_9", "Blue_25_Track_9", "Gray", "Gray_Track_4", "Gray_Track_5", "Gray_Track_9"]
+    imageNames := ["Green_100", "Green_50", "Green_25", "Green_100_Track_4", "Green_50_Track_4", "Green_25_Track_4", "Green_100_Track_5", "Green_50_Track_5", "Green_25_Track_5", "Green_100_Track_9", "Green_50_Track_9", "Green_25_Track_9", "Blue_100", "Blue_50", "Blue_25", "Blue_100_Track_4", "Blue_50_Track_4", "Blue_25_Track_4", "Blue_100_Track_5", "Blue_50_Track_5", "Blue_25_Track_5", "Blue_100_Track_9", "Blue_50_Track_9", "Blue_25_Track_9", "Gray", "Gray_Track_4", "Gray_Track_5", "Gray_Track_9", "Black", "Black_Track_4", "Black_Track_5", "Black_Track_9"]
 
-    imageColors := ["#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#808080", "#808080", "#808080", "#808080"]
+    imageColors := ["#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#808080", "#808080", "#808080", "#808080", "#000000", "#000000", "#000000", "#000000"]
 
-    imageTracking := [false, false, false, true, true, true, true, true, true, true, true, true, false, false, false, true, true, true, true, true, true, true, true, true, false, true, true, true]
+    imageTracking := [false, false, false, true, true, true, true, true, true, true, true, true, false, false, false, true, true, true, true, true, true, true, true, true, false, true, true, true, false, true, true, true]
 
-    trackColors := ["#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#000080", "#00003C", "#000080", "#000080", "#00003C", "#000080", "#000080", "#00003C", "#000080", "#000080", "#00003C", "#000080", "#003C00", "#003C00", "#003C00", "#003C00"]
+    trackColors := ["#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#000080", "#00003C", "#000080", "#000080", "#00003C", "#000080", "#000080", "#00003C", "#000080", "#000080", "#00003C", "#000080", "#003C00", "#003C00", "#003C00", "#003C00", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"]
 
     ; Definir el color azul para los puntos de track alternativos (para imágenes verdes y grises)
     blueTrackColor := "#000080"
