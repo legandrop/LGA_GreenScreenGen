@@ -15,3 +15,6 @@ ENV/
 
 # Ignorar .zip
 *.zip
+
+resources/logs/
+exports/
