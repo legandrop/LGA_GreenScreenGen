@@ -52,7 +52,7 @@ Gui, Main:Add, Button, gRemoveResolution x122 y80 w110 h24, Remove Resolution
 Gui, Main:Add, Button, gGenerateImages x240 y47 w80 h26, Generate
 Gui, Main:Add, Button, gGenerateAll x240 y80 w80 h24, Generate All
 ; Agregar el texto de la versión sin el gLabel
-Gui, Main:Add, Text, x310 y130 w40 h20 vVersionText gShowVersionTooltip, v1.0
+Gui, Main:Add, Text, x310 y130 w40 h20 vVersionText gShowVersionTooltip, v1.1
 
 ; Obtener el handle del control VersionText
 Gui, Main: +LastFound
