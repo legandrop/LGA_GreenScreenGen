@@ -52,7 +52,7 @@ Gui, Main:Add, Button, gRemoveResolution x122 y80 w110 h24, Remove Resolution
 Gui, Main:Add, Button, gGenerateImages x240 y47 w80 h26, Generate
 Gui, Main:Add, Button, gGenerateAll x240 y80 w80 h24, Generate All
 ; Agregar el texto de la versión sin el gLabel
-Gui, Main:Add, Text, x310 y130 w40 h20 vVersionText gShowVersionTooltip, v1.2
+Gui, Main:Add, Text, x310 y130 w40 h20 vVersionText gShowVersionTooltip, v1.3
 
 ; Obtener el handle del control VersionText
 Gui, Main: +LastFound
@@ -274,14 +274,264 @@ GenerateImages:
     ; **Archivo de prueba de caracteres especiales**
     commandsLog := logsDir . "\ffmpeg_commands.txt" ; Cambiado para usar la carpeta de logs
 
-    ; Definir los tipos de imágenes a generar
-    imageNames := ["Green_100", "Green_50", "Green_25", "Green_100_Track_4", "Green_50_Track_4", "Green_25_Track_4", "Green_100_Track_5", "Green_50_Track_5", "Green_25_Track_5", "Green_100_Track_9", "Green_50_Track_9", "Green_25_Track_9", "Blue_100", "Blue_50", "Blue_25", "Blue_100_Track_4", "Blue_50_Track_4", "Blue_25_Track_4", "Blue_100_Track_5", "Blue_50_Track_5", "Blue_25_Track_5", "Blue_100_Track_9", "Blue_50_Track_9", "Blue_25_Track_9", "Gray", "Gray_Track_4", "Gray_Track_5", "Gray_Track_9", "Black", "Black_Track_4", "Black_Track_5", "Black_Track_9"]
+    imageNamesStr =
+    (
+Green_100
+Green_50
+Green_25
 
-    imageColors := ["#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#00FF00", "#008000", "#003C00", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#0000FF", "#000080", "#00003C", "#808080", "#808080", "#808080", "#808080", "#000000", "#000000", "#000000", "#000000"]
+Green_100_Track_4
+Green_50_Track_4
+Green_25_Track_4
 
-    imageTracking := [false, false, false, true, true, true, true, true, true, true, true, true, false, false, false, true, true, true, true, true, true, true, true, true, false, true, true, true, false, true, true, true]
+Green_100_Track_5
+Green_50_Track_5
+Green_25_Track_5
+    
+Green_100_Track_8
+Green_50_Track_8
+Green_25_Track_8
 
-    trackColors := ["#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#008000", "#003C00", "#008000", "#000080", "#00003C", "#000080", "#000080", "#00003C", "#000080", "#000080", "#00003C", "#000080", "#000080", "#00003C", "#000080", "#003C00", "#003C00", "#003C00", "#003C00", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"]
+Green_100_Track_9
+Green_50_Track_9
+Green_25_Track_9
+
+Blue_100
+Blue_50
+Blue_25
+
+Blue_100_Track_4
+Blue_50_Track_4
+Blue_25_Track_4
+
+Blue_100_Track_5
+Blue_50_Track_5
+Blue_25_Track_5
+
+Blue_100_Track_8
+Blue_50_Track_8
+Blue_25_Track_8
+
+Blue_100_Track_9
+Blue_50_Track_9
+Blue_25_Track_9
+
+Gray
+Gray_Track_4
+Gray_Track_5
+Gray_Track_8
+Gray_Track_9
+
+Black
+Black_Track_4
+Black_Track_5
+Black_Track_8
+Black_Track_9
+    )
+
+    imageNames := []
+    Loop, Parse, imageNamesStr, `n, `r
+    {
+        if (Trim(A_LoopField) != "")
+            imageNames.Push(A_LoopField)
+    }
+
+
+    imageColorsStr =
+    (
+    #00FF00
+    #008000
+    #003C00
+
+    #00FF00
+    #008000
+    #003C00
+
+    #00FF00
+    #008000
+    #003C00
+
+    #00FF00
+    #008000
+    #003C00
+
+    #00FF00
+    #008000
+    #003C00
+
+    #0000FF
+    #000080
+    #00003C
+
+    #0000FF
+    #000080
+    #00003C
+
+    #0000FF
+    #000080
+    #00003C
+
+    #0000FF
+    #000080
+    #00003C
+
+    #0000FF
+    #000080
+    #00003C
+
+    #808080
+    #808080
+    #808080
+    #808080
+    #808080
+
+    #000000
+    #000000
+    #000000
+    #000000
+    #000000
+    )
+
+    imageColors := []
+    Loop, Parse, imageColorsStr, `n, `r
+    {
+        if (Trim(A_LoopField) != "")
+            imageColors.Push(Trim(A_LoopField))
+    }
+
+
+    imageTrackingStr =
+    (
+    false
+    false
+    false
+
+    true
+    true
+    true
+
+    true
+    true
+    true
+
+    true
+    true
+    true
+
+    true
+    true
+    true
+
+    false
+    false
+    false
+
+    true
+    true
+    true
+
+    true
+    true
+    true
+
+    true
+    true
+    true
+
+    true
+    true
+    true
+
+    false
+    true
+    true
+    true
+    true
+
+    false
+    true
+    true
+    true
+    true
+    )
+
+    imageTracking := []
+    Loop, Parse, imageTrackingStr, `n, `r
+    {
+        if (Trim(A_LoopField) != "")
+        {
+            ; Convertir la cadena "true"/"false" a valores booleanos
+            if (Trim(A_LoopField) = "true")
+                imageTracking.Push(true)
+            else
+                imageTracking.Push(false)
+        }
+    }
+
+
+    trackColorsStr =
+    (
+    #008000
+    #003C00
+    #008000
+
+    #008000
+    #003C00
+    #008000
+
+    #008000
+    #003C00
+    #008000
+
+    #008000
+    #003C00
+    #008000
+    
+    #008000
+    #003C00
+    #008000
+
+    #000080
+    #00003C
+    #000080
+
+    #000080
+    #00003C
+    #000080
+
+    #000080
+    #00003C
+    #000080
+
+    #000080
+    #00003C
+    #000080
+
+    #000080
+    #00003C
+    #000080
+
+    #003C00
+    #003C00
+    #003C00
+    #003C00
+    #003C00
+
+    #FFFFFF
+    #FFFFFF
+    #FFFFFF
+    #FFFFFF
+    #FFFFFF
+    )
+
+
+    trackColors := []
+    Loop, Parse, trackColorsStr, `n, `r
+    {
+        if (Trim(A_LoopField) != "")
+            trackColors.Push(Trim(A_LoopField))
+    }
+
 
     ; Definir el color azul para los puntos de track alternativos (para imágenes verdes y grises)
     blueTrackColor := "#000080"
@@ -410,24 +660,39 @@ GenerateImages:
                         ; Esquina inferior derecha
                         filter .= ",drawtext=fontfile=C\\:/Windows/Fonts/arial.ttf:text='" . circleChar . "':fontcolor=" . currentTrackColor . ":fontsize=" . currentFontSize . ":x=" . (width - currentMargin) . "-tw:y=" . (height - currentMargin) . "-th"
                         
-                        ; Añadir puntos adicionales para imágenes con 5 o 9 puntos de track
-                        if (InStr(imageName, "Track_5") || InStr(imageName, "Track_9"))
+                        ; Añadir puntos adicionales para imágenes con 5, 8 o 9 puntos de track
+                        if (trackCount = 5)
                         {
                             ; Centro
                             filter .= ",drawtext=fontfile=C\\:/Windows/Fonts/arial.ttf:text='" . circleChar . "':fontcolor=" . currentTrackColor . ":fontsize=" . currentFontSize . ":x=(w-tw)/2:y=(h-th)/2"
                         }
                         
-                        ; Añadir puntos adicionales solo para imágenes con 9 puntos de track
-                        if (InStr(imageName, "Track_9"))
+                        ; Añadir puntos adicionales para imágenes con 9 puntos de track
+                        if (trackCount = 9)
                         {
+                            ; Centro
+                            filter .= ",drawtext=fontfile=C\\:/Windows/Fonts/arial.ttf:text='" . circleChar . "':fontcolor=" . currentTrackColor . ":fontsize=" . currentFontSize . ":x=(w-tw)/2:y=(h-th)/2"
+                            ; Abajo centro
+                            filter .= ",drawtext=fontfile=C\\:/Windows/Fonts/arial.ttf:text='" . circleChar . "':fontcolor=" . currentTrackColor . ":fontsize=" . currentFontSize . ":x=(w-tw)/2:y=" . (height - currentMargin) . "-th"
                             ; Arriba centro
                             filter .= ",drawtext=fontfile=C\\:/Windows/Fonts/arial.ttf:text='" . circleChar . "':fontcolor=" . currentTrackColor . ":fontsize=" . currentFontSize . ":x=(w-tw)/2:y=" . currentMargin
                             ; Izquierda centro
                             filter .= ",drawtext=fontfile=C\\:/Windows/Fonts/arial.ttf:text='" . circleChar . "':fontcolor=" . currentTrackColor . ":fontsize=" . currentFontSize . ":x=" . currentMargin . ":y=(h-th)/2"
                             ; Derecha centro
                             filter .= ",drawtext=fontfile=C\\:/Windows/Fonts/arial.ttf:text='" . circleChar . "':fontcolor=" . currentTrackColor . ":fontsize=" . currentFontSize . ":x=" . (width - currentMargin) . "-tw:y=(h-th)/2"
+                        }
+                        
+                        ; Añadir punto adicional solo para imágenes con 8 puntos de track
+                        if (trackCount == 8)
+                        {
                             ; Abajo centro
                             filter .= ",drawtext=fontfile=C\\:/Windows/Fonts/arial.ttf:text='" . circleChar . "':fontcolor=" . currentTrackColor . ":fontsize=" . currentFontSize . ":x=(w-tw)/2:y=" . (height - currentMargin) . "-th"
+                            ; Arriba centro
+                            filter .= ",drawtext=fontfile=C\\:/Windows/Fonts/arial.ttf:text='" . circleChar . "':fontcolor=" . currentTrackColor . ":fontsize=" . currentFontSize . ":x=(w-tw)/2:y=" . currentMargin
+                            ; Izquierda centro
+                            filter .= ",drawtext=fontfile=C\\:/Windows/Fonts/arial.ttf:text='" . circleChar . "':fontcolor=" . currentTrackColor . ":fontsize=" . currentFontSize . ":x=" . currentMargin . ":y=(h-th)/2"
+                            ; Derecha centro
+                            filter .= ",drawtext=fontfile=C\\:/Windows/Fonts/arial.ttf:text='" . circleChar . "':fontcolor=" . currentTrackColor . ":fontsize=" . currentFontSize . ":x=" . (width - currentMargin) . "-tw:y=(h-th)/2"
                         }
 
                         ; Construir el comando FFmpeg con el filtro

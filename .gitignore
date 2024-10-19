@@ -17,4 +17,4 @@ ENV/
 *.zip
 
 resources/logs/
-# exports/
+exports/

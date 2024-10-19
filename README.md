@@ -35,3 +35,6 @@ Las imágenes generadas se guardarán en carpetas dentro del directorio "Exports
 - La carpeta "Margin2" contiene imágenes con un margen más grande.
 
 Todas las imágenes se generan en formato JPG de alta calidad.
+
+
+v1.3 | Lega | 2024
