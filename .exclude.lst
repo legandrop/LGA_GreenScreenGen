@@ -17,6 +17,8 @@ Compilar/
 .DS_Store
 Thumbs.db
 *.ahk
-+Release_generator.bat
+_LGA_ReleaseGen.bat
 .cursorrules
 *.ico
+*.zip
+resources/logs/

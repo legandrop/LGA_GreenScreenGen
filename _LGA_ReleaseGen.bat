@@ -38,11 +38,6 @@ if "!version_exists!"=="false" (
 rem Definir el nombre completo del nuevo archivo zip
 set "NEWZIPNAME=%ZIPNAME%_v!newver!.zip"
 
-rem Verificar si existe un archivo zip anterior y eliminarlo
-if exist "%ZIPNAME%*.zip" (
-    del "%ZIPNAME%*.zip"
-)
-
 rem Crear el archivo zip con las exclusiones especificadas
 "C:\Program Files\7-Zip\7z.exe" a -tzip "!NEWZIPNAME!" * -xr@.exclude.lst
 
