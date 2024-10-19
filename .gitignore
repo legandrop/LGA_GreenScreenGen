@@ -18,3 +18,5 @@ ENV/
 
 resources/logs/
 exports/
+ffmpeg_commands.txt
+ffmpeg_debug.txt
