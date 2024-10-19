@@ -1,6 +1,6 @@
 # GreenScreenGen
 
-GreenScreenGen es una herramienta para generar imágenes de fondo verde, azul, gris y negro para uso en producción audiovisual y efectos visuales.
+GreenScreenGen es una herramienta para generar imagenes verde, azul, gris y negro, con y sin puntos de track para uso pantallas.
 
 ## Características
 
