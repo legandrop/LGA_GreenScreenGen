@@ -20,3 +20,5 @@ resources/logs/
 exports/
 ffmpeg_commands.txt
 ffmpeg_debug.txt
+resources/logs/ffmpeg_commands.txt
+resources/logs/ffmpeg_debug.txt
