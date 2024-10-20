@@ -37,4 +37,4 @@ Las imágenes generadas se guardarán en carpetas dentro del directorio "Exports
 Todas las imágenes se generan en formato JPG de alta calidad.
 
 
-v1.3 | Lega | 2024
+v1.5 | Lega | 2024

@@ -52,7 +52,7 @@ Gui, Main:Add, Button, gRemoveResolution x122 y80 w110 h24, Remove Resolution
 Gui, Main:Add, Button, gGenerateImages x240 y47 w80 h26, Generate
 Gui, Main:Add, Button, gGenerateAll x240 y80 w80 h24, Generate All
 ; Agregar el texto de la versión sin el gLabel
-Gui, Main:Add, Text, x310 y130 w40 h20 vVersionText gShowVersionTooltip, v1.3
+Gui, Main:Add, Text, x310 y130 w40 h20 vVersionText gShowVersionTooltip, v1.5
 
 ; Obtener el handle del control VersionText
 Gui, Main: +LastFound
@@ -428,10 +428,6 @@ Black_Track_9
     true
     true
 
-    true
-    true
-    true
-
     false
     false
     false
@@ -687,7 +683,9 @@ Black_Track_9
                         currentFontSize := fontSize * (sizeIdx == 1 ? 0.5 : (sizeIdx == 2 ? 1 : 2))
                         
                         ; Extraer la cantidad de puntos de track del nombre de la imagen
-                        trackCount := RegExReplace(imageName, ".*Track_(\d+).*", "$1")
+                        RegExMatch(imageName, "Track_(\d+)", trackMatch)
+                        trackCount := trackMatch1
+
 
                         ; Definir el nombre del archivo de salida con el nuevo orden
                         outputFile := currentOutputDir . "\" . RegExReplace(imageName, "_Track_\d+", "_Track") . "-" . trackCount . "-Size" . sizeIdx . colorSuffix . ".jpg"
@@ -1029,9 +1027,6 @@ GenerateDistGrid(width, height, outputFile, errorLog, outputLog) {
     ffmpegCommand := """" . ffmpegPath . """ -y -f lavfi -i nullsrc=size=" . width . "x" . height
     ffmpegCommand .= " -vf ""geq=lum='if(mod(floor(X/" . squareSize . ")+floor(Y/" . squareSize . "),2),255,0)':cb=128:cr=128"""
     ffmpegCommand .= " -frames:v 1 -update 1 """ . outputFile . """ >""" . outputLog . """ 2>""" . errorLog . """"
-    
-    ; Mostrar el comando en una ventana de mensaje
-    MsgBox, 0, FFmpeg Command for DistGrid, %ffmpegCommand%
     
     ; Loguear el comando FFmpeg para depuración
     FileAppend, %ffmpegCommand%`n, %logsDir%\ffmpeg_generated_commands.log
