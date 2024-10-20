@@ -276,6 +276,7 @@ GenerateImages:
 
     imageNamesStr =
     (
+_DistGrid
 Green_100
 Green_50
 Green_25
@@ -327,6 +328,7 @@ Black_Track_4
 Black_Track_5
 Black_Track_8
 Black_Track_9
+
     )
 
     imageNames := []
@@ -339,6 +341,8 @@ Black_Track_9
 
     imageColorsStr =
     (
+    #000000
+
     #00FF00
     #008000
     #003C00
@@ -403,8 +407,14 @@ Black_Track_9
     imageTrackingStr =
     (
     false
+
     false
     false
+    false
+
+    true
+    true
+    true
 
     true
     true
@@ -471,6 +481,8 @@ Black_Track_9
 
     trackColorsStr =
     (
+    #000000
+
     #008000
     #003C00
     #008000
@@ -554,6 +566,55 @@ Black_Track_9
     ; Loop para generar cada imagen
     Loop, % totalImages
     {
+        idx := A_Index
+        imageName := imageNames[idx]
+
+        ; Generar la imagen de grilla primero
+        if (imageName = "_DistGrid") {
+            Loop, 2
+            {
+                marginIdx := A_Index
+                currentOutputDir := marginIdx == 1 ? outputDirMargin1 : outputDirMargin2
+                outputFile := currentOutputDir . "\" . imageName . ".jpg"
+                
+                ; Comprobar si el archivo ya existe
+                if FileExist(outputFile)
+                {
+                    if (!overwriteConfirmed)
+                    {
+                        MsgBox, 36, Confirmation, Some files already exist. Do you want to overwrite all existing files?
+                        IfMsgBox, No
+                            return
+                        overwriteConfirmed := true
+                    }
+                }
+                
+                ; Definir ruta para los archivos de log
+                errorLog := logsDir . "\" . imageName . "_error.log"
+                outputLog := logsDir . "\" . imageName . "_output.log"
+                
+                ; Generar la imagen de grilla de distorsión
+                GenerateDistGrid(width, height, outputFile, errorLog, outputLog)
+                
+                ; Verificar si el archivo se creó correctamente
+                if FileExist(outputFile)
+                {
+                    ; Eliminar archivos de log si no hubo errores
+                    if FileExist(errorLog)
+                        FileDelete, %errorLog%
+                    if FileExist(outputLog)
+                        FileDelete, %outputLog%
+                }
+                else
+                {
+                    ; Manejar errores
+                    MsgBox, 16, Error, Failed to generate DistGrid image. Check the error log for details.
+                    return
+                }
+            }
+            continue ; Pasar a la siguiente iteración del bucle
+        }
+
         ; Verificar si se ha cancelado la generación
         if (isCancelled)
         {
@@ -561,7 +622,6 @@ Black_Track_9
             break
         }
 
-        idx := A_Index
         imageName := imageNames[idx]
         imageColor := imageColors[idx]
         hasTracking := imageTracking[idx]
@@ -956,3 +1016,41 @@ return
 RemoveToolTip:
     ToolTip
 return
+
+; Función para generar la imagen de grilla de distorsión
+GenerateDistGrid(width, height, outputFile, errorLog, outputLog) {
+    global ffmpegPath, logsDir
+    
+    ; Calcular el tamaño de cada cuadrado para tener 20 en el lado más largo
+    squareSize := (width > height ? width : height) / 20
+    squareSize := Round(squareSize)  ; Redondear para evitar decimales
+    
+    ; Construir el comando FFmpeg para la grilla de distorsión
+    ffmpegCommand := """" . ffmpegPath . """ -y -f lavfi -i nullsrc=size=" . width . "x" . height
+    ffmpegCommand .= " -vf ""geq=lum='if(mod(floor(X/" . squareSize . ")+floor(Y/" . squareSize . "),2),255,0)':cb=128:cr=128"""
+    ffmpegCommand .= " -frames:v 1 -update 1 """ . outputFile . """ >""" . outputLog . """ 2>""" . errorLog . """"
+    
+    ; Mostrar el comando en una ventana de mensaje
+    MsgBox, 0, FFmpeg Command for DistGrid, %ffmpegCommand%
+    
+    ; Loguear el comando FFmpeg para depuración
+    FileAppend, %ffmpegCommand%`n, %logsDir%\ffmpeg_generated_commands.log
+    
+    ; Crear un archivo de lote temporal para ejecutar el comando
+    tempBatch := A_Temp "\run_ffmpeg_distgrid.bat"
+    FileDelete, %tempBatch%
+    FileAppend, % "chcp 65001`n" . ffmpegCommand . "`nexit", %tempBatch%, UTF-8-RAW
+    
+    ; Ejecutar el archivo de lote de manera oculta y esperar a que termine
+    RunWait, %tempBatch%, , Hide
+    
+    ; Eliminar el archivo de lote temporal
+    FileDelete, %tempBatch%
+    
+    ; Verificar si se generó la imagen
+    if (!FileExist(outputFile)) {
+        MsgBox, 16, Error, Failed to generate DistGrid image. Check the error log for details.
+        FileRead, errorContent, %errorLog%
+        MsgBox, 16, Error Log Content, %errorContent%
+    }
+}
